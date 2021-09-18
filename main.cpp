@@ -3,15 +3,11 @@
 #include <map>
 #include <vector>
 #include "IO.cpp"
-#include "Matrix.cpp"
+#include "NeedlemanWunsch.cpp"
 
 typedef std::pair<std::string, std::string> DNA; //<dna_id, dna_string>
 
 void read_dnas(std::istream&, std::vector<DNA>&);
-
-template <class T, class L>
-std::pair<std::vector<T>, L> needleman_wunsch(const std::map<T, size_t>&, const Lobaev::Math::Matrix<L>&, L,
-                                              const std::vector<T>&, const std::vector<T>&);
 
 const std::map<char, size_t> default_matrix_map{
         {'A', 0},
@@ -40,7 +36,7 @@ const std::map<char, size_t> default_matrix_map{
         {'*', 23},
 };
 
-const std::string usage = "Usage: lab1 (-m | --matrix)=<input matrix filename> [(-i | --input)=<input filename>] [(-o | --output)=<output filename>] [(-g | --gap)=<gap>]";
+const std::string usage = "Usage: lab1 (-m | --matrix) <input matrix filename> [(-i | --input) <input filename>] [(-o | --output) <output filename>] [(-g | --gap) <gap>]";
 
 int main(int argc, char **argv) {
     std::string input_filename, output_filename, matrix_filename;
@@ -93,12 +89,6 @@ int main(int argc, char **argv) {
 
     matrix_ifstream.close();
 
-    if (matrix.rows_count() != default_matrix_map.size() || matrix.columns_count() != default_matrix_map.size()) {
-        std::cerr << "Input matrix is invalid. Size should be (" <<
-        default_matrix_map.size() << 'x' << default_matrix_map.size() << ')' << std::endl << usage << std::endl;
-        return 1;
-    }
-
     std::vector<DNA> dnas;
     read_dnas(std::cin, dnas);
 
@@ -107,9 +97,16 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    const std::pair<std::vector<char>, long> result_pair = needleman_wunsch(default_matrix_map, matrix, gap,
-                                                                            std::vector<char>(dnas[0].second.begin(), dnas[0].second.end()),
-                                                                                    std::vector<char>(dnas[1].second.begin(), dnas[1].second.end()));
+    std::pair<std::vector<char>, long> result_pair;
+    try {
+        result_pair = needleman_wunsch(default_matrix_map, matrix, gap,
+                                       std::vector<char>(dnas[0].second.begin(), dnas[0].second.end()),
+                                       std::vector<char>(dnas[1].second.begin(), dnas[1].second.end()));
+    } catch (const std::string &exception) {
+        std::cerr << exception << std::endl << usage << std::endl;
+        return 1;
+    }
+
     const std::string result_string = std::string(result_pair.first.begin(), result_pair.first.end());
     const long result_score = result_pair.second;
 
@@ -117,61 +114,6 @@ int main(int argc, char **argv) {
     std::cout << "Score: " << result_score << std::endl;
 
     return 0;
-}
-
-template <class T, class L>
-std::pair<std::vector<T>, L> needleman_wunsch(const std::map<T, size_t> &matrix_map,
-                                              const Lobaev::Math::Matrix<L> &matrix, L gap, const std::vector<T> &seq1,
-                                              const std::vector<T> &seq2) {
-    std::vector<std::vector<L>> dynamic(seq1.size() + 1, std::vector<L>(seq2.size() + 1));
-
-    for (size_t i = 1; i <= seq1.size(); i++) {
-        for (size_t j = 1; j <= seq2.size(); j++) {
-            const size_t map_index_i = matrix_map.at(seq1[i - 1]);
-            const size_t map_index_j = matrix_map.at(seq1[i - 1]);
-
-            dynamic[i][j] = dynamic[i - 1][j - 1] + matrix(map_index_i, map_index_j);
-            dynamic[i][j] = std::max(dynamic[i][j], dynamic[i - 1][j] + gap);
-            dynamic[i][j] = std::max(dynamic[i][j], dynamic[i][j - 1] + gap);
-        }
-    }
-
-    size_t best_index_i = 0;
-    for (size_t i = 1; i <= seq1.size(); i++) {
-        if (dynamic[best_index_i][seq2.size()] < dynamic[i][seq2.size()]) {
-            best_index_i = i;
-        }
-    }
-
-    size_t best_index_j = 0;
-    for (size_t j = 1; j <= seq2.size(); j++) {
-        if (dynamic[seq1.size()][best_index_j] < dynamic[seq1.size()][j]) {
-            best_index_j = j;
-        }
-    }
-
-    size_t i = seq1.size(), j = seq2.size();
-    if (dynamic[best_index_i][seq2.size()] > dynamic[seq1.size()][best_index_j]) {
-        i = best_index_i;
-    } else {
-        j = best_index_j;
-    }
-
-    std::pair<std::vector<T>, L> result;
-    result.second = dynamic[i][j];
-
-    while (i > 0 && j > 0) {
-        if (dynamic[i][j] == dynamic[i - 1][j] + gap) {
-            i--;
-        } else if (dynamic[i][j] == dynamic[i][j - 1] + gap) {
-            j--;
-        } else {
-            i--;
-            j--;
-            result.first.emplace_back(seq1[i]);
-        }
-    }
-    return result;
 }
 
 void read_dnas(std::istream &in, std::vector<DNA> &dnas) {
