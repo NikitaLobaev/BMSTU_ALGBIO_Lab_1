@@ -3,6 +3,12 @@ project(ALGBIO_Lab_1)
 
 set(CMAKE_CXX_STANDARD 20)
 
+add_subdirectory(googletest)
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+
 include_directories("/home/lobaevni/Desktop/МГТУ/7 семестр/Численные методы линейной алгебры/Lab_1/NMLA_Lab_1")
 
-add_executable(ALGBIO_Lab_1 main.cpp)
+add_executable(main.cpp main.cpp)
+
+add_executable(tests.cpp tests.cpp)
+target_link_libraries(tests.cpp gtest gtest_main)
