@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_subdirectory(googletest)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
-include_directories("/home/lobaevni/Desktop/МГТУ/7 семестр/Численные методы линейной алгебры/Lab_1/NMLA_Lab_1")
+include_directories(BMSTU_NMLA_Lab_1)
 
 add_executable(main.cpp main.cpp)
 
