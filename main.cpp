@@ -36,11 +36,17 @@ const std::map<char, size_t> default_matrix_map{
         {'*', 23},
 };
 
-const std::string usage = "Usage: lab1 (-m | --matrix) <input matrix filename> [(-i | --input) <input filename>] [(-o | --output) <output filename>] [(-g | --gap) <gap>]";
+const char *usage = "Usage: lab1 (-m | --matrix) <input matrix filename> [(-i | --input) <input filename>] [(-o | --output) <output filename>] [(-g | --gap) <gap>]";
 
 int main(int argc, char **argv) {
     std::string input_filename, output_filename, matrix_filename;
     long gap = -2;
+
+    if (argc % 2 == 0) {
+        std::cerr << usage << std::endl;
+        return 1;
+    }
+
     for (size_t i = 1; i + 1 < argc; i += 2) {
         std::string arg(argv[i]);
 
